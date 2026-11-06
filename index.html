@@ -120,7 +120,7 @@
       <h2>How to play</h2>
       <ul class="rules">
         <li>The guy walks to the right and never stops. Get him to the <b>🏁 flag</b>.</li>
-        <li>You can't touch him. Grab the <b>graph</b> instead: <b>✋ Move</b> slides the line and <b>🔄 Rotate</b> turns it. Then press <b>▶ Go</b>.</li>
+        <li>You can't touch him. Grab the <b>graph</b> instead: <b>✋ Move</b> slides the line and <b>🔄 Rotate</b> turns it around the dot (everything stays still while you turn it). Then press <b>▶ Go</b>.</li>
         <li>The <b>yellow dot</b> runs along the line from one side to the other. How high it is makes the <b>number</b>.</li>
         <li><span class="sw" style="background:#ef4444"></span> <b>Red</b> slides left when the number is high, and right when it's low.</li>
         <li><span class="sw" style="background:#3b82f6"></span> <b>Blue</b> slides left when the number is low, and right when it's high.</li>
@@ -217,13 +217,13 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="sim.js?v=1"></script>
-<script src="graph.js?v=1"></script>
+<script src="sim.js?v=2"></script>
+<script src="graph.js?v=2"></script>
 <script>
   // Browsers keep an old copy of this page for a while. Ask the site which version is newest,
   // and if this page is older, load the new one straight away.
   (function () {
-    var V = '1';
+    var V = '2';
     fetch('version.txt?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.text() : ''; })
       .then(function (t) {

@@ -216,11 +216,11 @@
     const { b, m } = S.line;
     c.strokeStyle = '#7c3aed'; c.lineWidth = 4; c.lineCap = 'round';
     c.beginPath(); c.moveTo(gx2px(-VMAX), gy2px(b - m * VMAX)); c.lineTo(gx2px(VMAX), gy2px(b + m * VMAX)); c.stroke();
-    if (S.phase === 'plan' && S.grab === 'rotate') {
-      c.fillStyle = '#7c3aed'; c.beginPath(); c.arc(gx2px(0), gy2px(b), 6, 0, 7); c.fill();
-      c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
-    }
     c.restore();
+    if (S.phase === 'plan' && S.grab === 'rotate') {
+      // A ring round the dot: that's what the line turns around.
+      c.strokeStyle = '#7c3aed'; c.lineWidth = 3; c.beginPath(); c.arc(gx2px(-VMAX), gy2px(b - m * VMAX), 13, 0, 7); c.stroke();
+    }
     // The dot. Its height is the number.
     const t = S.run ? S.run.t : 0, dx = GG.dotX(t), v = GG.valueAt(S.line, t);
     c.strokeStyle = 'rgba(250,204,21,.7)'; c.lineWidth = 2; c.setLineDash([4, 4]);
@@ -257,21 +257,28 @@
       // Sliding the line: up and down moves it, and so does sideways if it's tilted.
       setLine(l0.b + (y - gdrag.y) - l0.m * (x - gdrag.x), l0.m);
     } else {
-      // Turning round the middle of the line.
-      const a0 = Math.atan2(gdrag.y - l0.b, gdrag.x), a1 = Math.atan2(y - l0.b, x);
+      // Turning round the dot at the start, so the starting number (and where everything starts) stays still.
+      const py = l0.b - l0.m * VMAX, px = -VMAX;
+      if (Math.hypot(gdrag.x - px, gdrag.y - py) < 1.2) return; // too close to the dot to tell which way
+      const a0 = Math.atan2(gdrag.y - py, gdrag.x - px), a1 = Math.atan2(y - py, x - px);
       let da = a1 - a0;
       while (da > Math.PI) da -= 2 * Math.PI;
       while (da < -Math.PI) da += 2 * Math.PI;
-      if (Math.hypot(gdrag.x, gdrag.y - l0.b) < 1.2) return; // too close to the middle to tell which way
-      setLine(l0.b, Math.tan(clamp(Math.atan(l0.m) + da, -1.3, 1.3)));
+      turnTo(l0, Math.atan(l0.m) + da);
     }
   });
   const endG = e => { if (gdrag && e.pointerId === gdrag.id) gdrag = null; };
   gcv.addEventListener('pointerup', endG);
   gcv.addEventListener('pointercancel', endG);
 
-  function setLine(b, m) {
-    S.line = { b: clamp(Math.round(b * 10) / 10, -15, 15), m: clamp(Math.round(m * 100) / 100, -3.6, 3.6) };
+  // Tilt the line to angle a, keeping its left end (where the dot starts) in the same place.
+  function turnTo(l0, a) {
+    const py = l0.b - l0.m * VMAX, m = Math.round(Math.tan(clamp(a, -1.3, 1.3)) * 100) / 100;
+    setLine(py + m * VMAX, m, true);
+  }
+  function setLine(b, m, exact) {
+    m = clamp(Math.round(m * 100) / 100, -3.6, 3.6);
+    S.line = { b: exact ? Math.round(b * 1000) / 1000 : clamp(Math.round(b * 10) / 10, -50, 50), m };
     if (S.phase === 'plan') S.run = GG.newRun(S.L, S.line);
     draw();
   }
@@ -427,8 +434,8 @@
     const { b, m } = S.line;
     if (e.key === 'ArrowUp') setLine(b + 0.5, m);
     else if (e.key === 'ArrowDown') setLine(b - 0.5, m);
-    else if (e.key === 'ArrowLeft') setLine(b, Math.tan(clamp(Math.atan(m) + 0.087, -1.3, 1.3)));
-    else if (e.key === 'ArrowRight') setLine(b, Math.tan(clamp(Math.atan(m) - 0.087, -1.3, 1.3)));
+    else if (e.key === 'ArrowLeft') turnTo(S.line, Math.atan(m) + 0.087);
+    else if (e.key === 'ArrowRight') turnTo(S.line, Math.atan(m) - 0.087);
     else if (e.key.toLowerCase() === 'm') setGrab('move');
     else if (e.key.toLowerCase() === 'r') setGrab('rotate');
     else return;

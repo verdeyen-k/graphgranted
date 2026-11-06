@@ -4,7 +4,7 @@ A puzzle game about a guy who walks to the right forever. You can't touch him: y
 
 ## How to play
 
-- **✋ Move** slides the graph's line and **🔄 Rotate** turns it round its middle. Then press **▶ Go**.
+- **✋ Move** slides the graph's line and **🔄 Rotate** turns it around the yellow dot, so where everything starts stays still. Then press **▶ Go**.
 - The yellow dot runs along the line from the left side to the right side in 10 seconds. Its height is the **number** (−10 to 10).
 - 🟥 **Red** slides left when the number is high, and right when it's low.
 - 🟦 **Blue** slides left when the number is low, and right when it's high.
