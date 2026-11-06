@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Graph and Granted</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eaf1fb; --ink: #1e293b; --muted: #64748b; --card: #ffffff; --line: #cbd5e1;
+    --accent: #7c3aed; --accent-ink: #fff; --accent-shadow: #5b21b6;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: var(--bg); }
+  body { margin: 0; color: var(--ink); font-family: 'Fredoka', ui-rounded, system-ui, sans-serif; min-height: 100vh; overflow: hidden;
+    background: var(--bg);
+    background-image: linear-gradient(#d9e4f2 1px, transparent 1px), linear-gradient(90deg, #d9e4f2 1px, transparent 1px);
+    background-size: 24px 24px; }
+  button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  .muted { color: var(--muted); }
+  .center { text-align: center; }
+
+  .screen { position: fixed; inset: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .col { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; margin: auto 0; }
+  h1 { margin: 0; font-size: clamp(40px, 12vw, 64px); line-height: .95; text-align: center; color: var(--accent); }
+  h1 small { display: block; font-size: .32em; color: var(--muted); letter-spacing: 2px; margin-top: 8px; font-weight: 500; }
+  h2 { margin: 0; font-size: 22px; }
+  p { margin: 0; line-height: 1.4; }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .btn { border-radius: 14px; padding: 11px 16px; font-size: 18px; font-weight: 600; cursor: pointer; background: var(--card);
+    border: 2px solid var(--line); box-shadow: 0 3px 0 var(--line); transition: transform .08s; }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; box-shadow: 0 4px 0 var(--accent-shadow); }
+  .btn.small { padding: 6px 12px; font-size: 15px; }
+  .btn.poor { opacity: .5; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .big { font-size: 22px; padding: 14px; }
+  ul.rules { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.35; }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; border: 2px solid rgba(0,0,0,.25); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .lvl { position: relative; background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 12px 8px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: 0 3px 0 var(--line); }
+  .lvl b { font-size: 28px; color: var(--accent); }
+  .lvl span { font-size: 14px; text-align: center; }
+  .lvl i { position: absolute; top: 4px; right: 6px; font-style: normal; }
+  .lvl.done { border-color: #86efac; }
+  .item { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid;
+    grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+  .item-name { font-weight: 600; font-size: 18px; overflow-wrap: anywhere; }
+  .item-info { font-size: 14px; color: var(--muted); grid-column: 1; }
+  .item-btns { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* The game */
+  #game { position: fixed; inset: 0; display: flex; flex-direction: column; padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+  #top { display: flex; align-items: center; gap: 8px; padding: 8px; flex-wrap: wrap; }
+  #title { font-weight: 700; font-size: 20px; }
+  #hint { flex-basis: 100%; font-size: 14px; color: var(--muted); margin: 0 4px; }
+  #main { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; }
+  #stage { flex: 1; min-height: 150px; position: relative; }
+  #level { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; border-radius: 12px; }
+  .panel { background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  #play-panel { align-items: center; }
+  #graph { width: min(100%, 300px, 42vh); aspect-ratio: 1; touch-action: none; cursor: grab; }
+  #graph.locked { cursor: default; opacity: .9; }
+  .readout { display: flex; justify-content: space-between; width: 100%; max-width: 300px; font-weight: 600; gap: 8px; }
+  #equation { color: var(--accent); }
+  .seg { display: flex; gap: 6px; width: 100%; max-width: 300px; }
+  .seg .btn { flex: 1; padding: 8px 6px; font-size: 16px; }
+  .seg .btn.on { background: #ede9fe; border-color: var(--accent); box-shadow: 0 3px 0 var(--accent); }
+  #go { width: 100%; max-width: 300px; }
+  @media (orientation: landscape) and (min-width: 640px) {
+    #main { flex-direction: row; }
+    .panel { width: 300px; flex: none; overflow-y: auto; }
+    #graph { width: min(100%, 280px, calc(100vh - 260px)); }
+  }
+  @media (orientation: portrait) {
+    #play-panel { display: grid; grid-template-columns: auto 1fr; align-items: start; justify-items: stretch; }
+    #play-panel #graph { grid-row: 1 / span 4; width: min(52vw, 40vh, 280px); }
+    #play-panel .readout { flex-direction: column; }
+  }
+
+  #tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 5px; }
+  .tool { border-radius: 10px; border: 2px solid var(--line); background: var(--card); padding: 3px 2px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .tool .i { font-size: 20px; }
+  .tool .n { font-size: 11px; font-weight: 600; }
+  .tool.on { background: #ede9fe; border-color: var(--accent); }
+  #edit-tip { font-size: 13px; color: var(--muted); min-height: 2.6em; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .actions .btn { padding: 8px; font-size: 16px; }
+  input.text { font: inherit; font-size: 17px; padding: 8px 10px; border: 2px solid var(--line); border-radius: 12px; width: 100%; color: var(--ink); background: #fff; }
+  input.text:focus { outline: none; border-color: var(--accent); }
+  @media (orientation: portrait) {
+    #edit-panel { max-height: 46vh; overflow-y: auto; }
+    #tools { grid-template-columns: repeat(6, 1fr); }
+  }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .overlay .card { max-width: 380px; width: 100%; text-align: center; }
+  #toast { position: fixed; left: 50%; top: calc(60px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 20;
+    background: #1e293b; color: #fff; border-radius: 14px; padding: 8px 16px; font-weight: 600; font-size: 16px; text-align: center;
+    max-width: calc(100% - 24px); pointer-events: none; transition: opacity .4s; }
+</style>
+</head>
+<body>
+
+<section class="screen" id="home">
+  <div class="col">
+    <h1>Graph and Granted<small>GRAB THE GRAPH · GET HIM TO THE FLAG</small></h1>
+    <button class="btn primary big" id="m-play" type="button">▶ Play levels</button>
+    <button class="btn big" id="m-make" type="button">✏️ Make a level</button>
+    <button class="btn big" id="m-online" type="button">🌍 Uploaded levels</button>
+    <div class="card">
+      <h2>How to play</h2>
+      <ul class="rules">
+        <li>The guy walks to the right and never stops. Get him to the <b>🏁 flag</b>.</li>
+        <li>You can't touch him. Grab the <b>graph</b> instead: <b>✋ Move</b> slides the line and <b>🔄 Rotate</b> turns it. Then press <b>▶ Go</b>.</li>
+        <li>The <b>yellow dot</b> runs along the line from one side to the other. How high it is makes the <b>number</b>.</li>
+        <li><span class="sw" style="background:#ef4444"></span> <b>Red</b> slides left when the number is high, and right when it's low.</li>
+        <li><span class="sw" style="background:#3b82f6"></span> <b>Blue</b> slides left when the number is low, and right when it's high.</li>
+        <li><span class="sw" style="background:#f59e0b"></span> <b>Orange</b> ignores the graph, but it falls and gets pushed around.</li>
+        <li><span class="sw" style="background:#6b7280"></span> <b>Grey</b> never moves.</li>
+        <li>While you plan, faint outlines show where red and blue will be when the dot gets to the end.</li>
+      </ul>
+    </div>
+    <div class="row"><a class="btn" href="/" style="text-decoration:none">All games</a></div>
+  </div>
+</section>
+
+<section class="screen" id="levels" hidden>
+  <div class="col">
+    <h2 class="center">Levels</h2>
+    <div class="grid" id="level-grid"></div>
+    <div class="row"><button class="btn home-btn" type="button">← Menu</button></div>
+  </div>
+</section>
+
+<section class="screen" id="mine-screen" hidden>
+  <div class="col">
+    <h2 class="center">My levels</h2>
+    <p class="muted center">Make a level, beat it yourself with ▶ Test, then upload it so everyone can play it.</p>
+    <button class="btn primary" id="new-level" type="button">＋ New level</button>
+    <div class="list" id="mine-list"></div>
+    <div class="row"><button class="btn home-btn" type="button">← Menu</button></div>
+  </div>
+</section>
+
+<section class="screen" id="online" hidden>
+  <div class="col">
+    <h2 class="center">🌍 Uploaded levels</h2>
+    <div class="list" id="online-list"></div>
+    <div class="row"><button class="btn home-btn" type="button">← Menu</button></div>
+  </div>
+</section>
+
+<section id="game" class="screen" hidden style="padding:0;align-items:stretch;overflow:hidden">
+  <div id="top">
+    <button class="btn small" id="back" type="button">← Back</button>
+    <span id="title"></span>
+    <p id="hint"></p>
+  </div>
+  <div id="main">
+    <div id="stage"><canvas id="level" aria-label="The level"></canvas></div>
+    <div class="panel" id="play-panel">
+      <canvas id="graph" aria-label="The graph. Drag to change the line."></canvas>
+      <div class="readout"><span>Number: <span id="number">0.0</span></span><span id="equation">y = 0</span></div>
+      <div class="seg">
+        <button class="btn on" id="g-move" type="button">✋ Move</button>
+        <button class="btn" id="g-rotate" type="button">🔄 Rotate</button>
+        <button class="btn" id="g-flat" type="button" title="Put the line back flat" aria-label="Reset the line">↺</button>
+      </div>
+      <button class="btn primary big" id="go" type="button">▶ Go</button>
+    </div>
+    <div class="panel" id="edit-panel" hidden>
+      <input class="text" id="level-name" maxlength="30" placeholder="Level name" aria-label="Level name">
+      <div id="tools"></div>
+      <div id="edit-tip"></div>
+      <div class="actions">
+        <button class="btn" id="e-undo" type="button">↩️ Undo</button>
+        <button class="btn" id="e-clear" type="button">🗑️ Clear</button>
+        <button class="btn primary" id="e-test" type="button">▶ Test</button>
+        <button class="btn" id="e-upload" type="button">⬆️ Upload</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="overlay" id="win" hidden>
+  <div class="card">
+    <h2>🏁 Made it!</h2>
+    <p id="win-text"></p>
+    <div class="list" id="win-btns"></div>
+  </div>
+</div>
+
+<div class="overlay" id="upload" hidden>
+  <div class="card" style="text-align:left">
+    <h2>⬆️ Upload your level</h2>
+    <p class="muted">Everyone who plays Graph and Granted will be able to play it.</p>
+    <input class="text" id="up-name" maxlength="30" placeholder="Level name" aria-label="Level name">
+    <input class="text" id="up-by" maxlength="20" placeholder="Your name (you can leave this empty)" aria-label="Your name">
+    <p class="muted" id="up-status"></p>
+    <div class="row">
+      <button class="btn" id="up-cancel" type="button">Cancel</button>
+      <button class="btn primary" id="up-send" type="button">Upload</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" style="opacity:0"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="sim.js?v=1"></script>
+<script src="graph.js?v=1"></script>
+<script>
+  // Browsers keep an old copy of this page for a while. Ask the site which version is newest,
+  // and if this page is older, load the new one straight away.
+  (function () {
+    var V = '1';
+    fetch('version.txt?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (t) {
+        t = t.trim();
+        if (t && t !== V && location.search !== '?v=' + t) location.replace(location.pathname + '?v=' + t + location.hash);
+      })
+      .catch(function () { /* offline: keep playing this copy */ });
+  })();
+</script>
+</body>
+</html>
